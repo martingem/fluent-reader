@@ -7,23 +7,9 @@ import {
     getSearchEngineName,
 } from "../../scripts/utils"
 import { ThemeSettings, SearchEngines } from "../../schema-types"
-import {
-    getThemeSettings,
-    setThemeSettings,
-    exportAll,
-} from "../../scripts/settings"
-import {
-    Stack,
-    Label,
-    Toggle,
-    TextField,
-    DefaultButton,
-    ChoiceGroup,
-    IChoiceGroupOption,
-    Dropdown,
-    IDropdownOption,
-    PrimaryButton,
-} from "@fluentui/react"
+import { getThemeSettings, setThemeSettings, exportAll } from "../../scripts/settings"
+import { Stack, Label, Toggle, TextField, DefaultButton, ChoiceGroup, IChoiceGroupOption, Dropdown, IDropdownOption, PrimaryButton, ToggleBase, loadTheme } from "@fluentui/react"
+
 import DangerButton from "../utils/danger-button"
 
 type AppTabProps = {
@@ -40,6 +26,7 @@ type AppTabState = {
     itemSize: string
     cacheSize: string
     deleteIndex: string
+    iconStatus: boolean
 }
 
 class AppTab extends React.Component<AppTabProps, AppTabState> {
@@ -52,6 +39,7 @@ class AppTab extends React.Component<AppTabProps, AppTabState> {
             itemSize: null,
             cacheSize: null,
             deleteIndex: null,
+            iconStatus: window.settings.getIconStatus()
         }
         this.getItemSize()
         this.getCacheSize()
@@ -89,20 +77,23 @@ class AppTab extends React.Component<AppTabProps, AppTabState> {
         { key: 45, text: intl.get("time.minute", { m: 45 }) },
         { key: 60, text: intl.get("time.hour", { h: 1 }) },
     ]
+    
     onFetchIntervalChanged = (item: IDropdownOption) => {
         this.props.setFetchInterval(item.key as number)
     }
 
-    searchEngineOptions = (): IDropdownOption[] =>
-        [
-            SearchEngines.Google,
-            SearchEngines.Bing,
-            SearchEngines.Baidu,
-            SearchEngines.DuckDuckGo,
-        ].map(engine => ({
-            key: engine,
-            text: getSearchEngineName(engine),
-        }))
+    toggleIcon = () => {
+        window.settings.toggleIconStatus()
+        this.setState({ iconStatus: window.settings.getIconStatus() })
+    }
+
+    searchEngineOptions = (): IDropdownOption[] => [
+        SearchEngines.Google, SearchEngines.Bing, SearchEngines.Baidu, SearchEngines.DuckDuckGo
+    ].map(engine => ({
+        key: engine,
+        text: getSearchEngineName(engine)
+    }))
+
     onSearchEngineChanged = (item: IDropdownOption) => {
         window.settings.setSearchEngine(item.key as number)
     }
@@ -219,6 +210,13 @@ class AppTab extends React.Component<AppTabProps, AppTabState> {
                     />
                 </Stack.Item>
             </Stack>
+
+            <Toggle
+                label={intl.get("app.useCustomIcons")}
+                checked={this.state.iconStatus}
+                onText="Enabled"
+                offText="Disabled"
+                onChanged={this.toggleIcon} />
 
             <Stack horizontal verticalAlign="baseline">
                 <Stack.Item grow>

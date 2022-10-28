@@ -25,12 +25,11 @@ export type AppDispatch = ThunkDispatch<RootState, undefined, AnyAction>
 const rssParser = new Parser({
     customFields: {
         item: [
-            "thumb",
-            "image",
-            ["content:encoded", "fullContent"],
-            ["media:content", "mediaContent", { keepArray: true }],
-        ] as Parser.CustomFieldItem[],
-    },
+            "thumb", "image", ["content:encoded", "fullContent"], 
+            ['media:content', 'mediaContent', {keepArray: true}],
+            ['media:group', 'videoMeta', {keepArray: false}],
+        ] as Parser.CustomFieldItem[]
+    }
 })
 
 const CHARSET_RE = /charset=([^()<>@,;:\"/[\]?.=\s]*)/i
@@ -93,8 +92,33 @@ export async function parseRSS(url: string) {
 
 export const domParser = new DOMParser()
 
+export async function fetchYTChannelIcon(url: string) {
+    let channelId = url.split("=")[1]
+    url = url.split("/").slice(0, 3).join("/")
+    let channelUrl = url + '/channel/' + channelId
+    let result = await fetch(channelUrl, { credentials: 'omit', })
+    if (result.ok) {
+        let html = await result.text()
+        let dom = domParser.parseFromString(html, "text/html")
+        let links = dom.getElementsByTagName("link")
+        for (let link of links) {
+            let rel = link.getAttribute("rel")
+            if (rel === "image_src" && link.hasAttribute("href")) {
+                let href = link.getAttribute("href")
+                return href.replace("=s900", "=s16")
+            }
+        }
+    }
+}
+
 export async function fetchFavicon(url: string) {
     try {
+        const customIcon = window.settings.getIconStatus()
+        if (customIcon) {
+            if (Url.parse(url).host === "www.youtube.com" && url.includes("channel")) {
+                return fetchYTChannelIcon(url)
+            }
+        }
         url = url.split("/").slice(0, 3).join("/")
         let result = await fetch(url, { credentials: "omit" })
         if (result.ok) {
@@ -111,6 +135,7 @@ export async function fetchFavicon(url: string) {
                     let parsedUrl = Url.parse(url)
                     if (href.startsWith("//")) return parsedUrl.protocol + href
                     else if (href.startsWith("/")) return url + href
+                    else if (href.startsWith("favicon")) return url + '/' + href
                     else return href
                 }
             }
@@ -147,10 +172,15 @@ export function htmlDecode(input: string) {
     return doc.documentElement.textContent
 }
 
-export const urlTest = (s: string) =>
-    /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,63}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/gi.test(
-        s
-    )
+export function parseYouTubeContent(url: string, views: string, likes: string, content: string){
+    const video = `<iframe width="560" height="315" src="${url}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
+    const views_likes = `<p style="float: left; color: #808080;"><em>${views} ${intl.get("article.views")}</em></p><p style="float: right; color: #808080;"><em>${likes} ${intl.get("article.likes")}</em></p>`
+    const _content = `<div style="word-break: break-all;>"<pre>${content.replace(/(?:\r\n|\r|\n)/g, '<br>')}</pre></div>`
+    return `${video}${views_likes}<br><br><br><hr />${_content}`
+}
+
+export const urlTest = (s: string) => 
+    /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,63}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/gi.test(s)
 
 export const getWindowBreakpoint = () => window.outerWidth >= 1440
 

@@ -66,7 +66,9 @@
         "loadWebpage": "Charger la page web",
         "loadFull": "Charger tout le contenu",
         "notify": "Notifier le chargement en arrière-plan",
-        "dontNotify": "Ne pas notifier"
+        "dontNotify": "Ne pas notifier",
+        "views": "vues",
+        "likes": "mentions \"J'aime\""
     },
     "context": {
         "share": "Partager",
@@ -227,6 +229,7 @@
         "setPac": "Définir PAC",
         "pacHint": "Pour les proxies Sockets, il est recommandé que le PAC retourne \"SOCKS5\" pour le DNS côté proxies. La désactivation du proxy nécessite un redémarrage.",
         "fetchInterval": "Intervalle de récupération automatique",
-        "never": "Jamais"
+        "never": "Jamais",
+        "useCustomIcons": "Utiliser des icônes personalisées lorsque disponible"
     }
 }
